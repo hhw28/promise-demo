@@ -84,4 +84,79 @@ describe("Promise", () => {
     // @ts-ignore
     promise.then(null, fail)
   })
+  it("2.2.1 onFulfilled 和 onRejected 都是函数, 不是函数会忽略", () => {
+    const promise = new Promise((resolve, reject) => {
+      resolve()
+    })
+    // @ts-ignore
+    promise.then(false, null)
+  })
+  it("2.2.2 onFulfilled 此函数在完成(fulfilled)状态后仅被调用一次，并把promise的值作为第一个参数传入", (done) => {
+    let success = sinon.fake()
+    const promise = new Promise((resolve, reject) => {
+      assert.isFalse(success.called)
+      resolve(111)
+      resolve(22)
+      setTimeout(() => {
+        assert(promise.state === 'fulfilled')
+        assert.isTrue(success.calledOnceWith(111))
+        done()
+      }, 0)
+    })
+    // @ts-ignore
+    promise.then(success)
+  })
+  it("2.2.3 onRejected 此函数在(rejected)状态后仅被调用一次，并把promise的值作为第一个参数传入" , (done) => {
+    let fail = sinon.fake()
+    const promise = new Promise((resolve, reject) => {
+      assert.isFalse(fail.called)
+      reject(111)
+      reject(22)
+      setTimeout(() => {
+        assert(promise.state === 'rejected')
+        assert.isTrue(fail.calledOnceWith(111))
+        done()
+      }, 0)
+    })
+    // @ts-ignore
+    promise.then(null, fail)
+  })
+  it("2.2.4 在我的代码执行完之前，不得调用 onFulfilled 或 onRejected (测试promise异步执行原理)", (done) => {
+    let fn = sinon.fake()
+    const promise = new Promise((resolve, reject) => {
+      resolve()
+    })
+    promise.then(fn)
+    assert.isFalse(fn.called)
+    setTimeout(() => {
+      assert.isTrue(fn.called)
+      done()
+    }, 0)
+  })
+  it("2.2.5 onFulfilled 和 onRejected 必须被作为函数调用，无this值", (done) => {
+    const promise = new Promise((resolve, reject) => {
+      resolve()
+    })
+    promise.then(function() {
+      assert(this === undefined)
+      done()
+    })
+  })
+  it("2.2.6 then 可以在同一个promise上被多次调用", (done) => {
+    let callbacks = [sinon.fake(), sinon.fake(), sinon.fake()]
+    const promise = new Promise((resolve, reject) => {
+      resolve()
+    })
+    promise.then(callbacks[0])
+    promise.then(callbacks[1])
+    promise.then(callbacks[2])
+    setTimeout(() => {
+      assert.isTrue(callbacks[0].called)
+      assert.isTrue(callbacks[1].called)
+      assert.isTrue(callbacks[2].called)
+      assert.isTrue(callbacks[0].calledBefore(callbacks[1]))
+      assert.isTrue(callbacks[1].calledBefore(callbacks[2]))
+      done()
+    }, 0)
+  })
 });
