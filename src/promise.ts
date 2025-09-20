@@ -1,15 +1,15 @@
 export default class Promise2 {
-  succeed = null
-  fail = null
+  succeed?: Function
+  fail?: Function
 
   resolve() {
     setTimeout(() => {
-      this.succeed()
+      this.succeed?.()
     },0)
   }
   reject() {
     setTimeout(() => {
-      this.fail()
+      this.fail?.()
     },0)
   }
   constructor(fn: Function) {
